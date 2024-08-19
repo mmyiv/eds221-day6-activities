@@ -1,0 +1,108 @@
+---
+title: "eds221-day6-activities"
+author: "mish"
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+# Task 1
+
+# The most common guideline I have seen ignored is being consistent with naming. In the shelter I worked at I had to find how many procedures requires anesthesia. However when looking at the google sheet the staff used, cat spay/neuters appointment names varied from fel spay, cat neut, cat alter, and so on. 
+# Working with that spreadsheet was not fun. I had to choose between going through all the appointment and manually changing the names to be consistent, or going through the worksheet and tallying it by hand. 
+```
+
+```{r}
+# Task 2
+
+library(tidyverse)
+library(here)
+library(janitor)
+library(dplyr)
+
+lobster_abundance <- read.csv(here("data", "Lobster_Abundance_All_Years_20210412.csv"), na = c("-99999", "")) %>%
+  clean_names() %>% uncount(count)
+
+# added a count column???
+```
+
+```{r}
+# counts and mean sizes by year
+lobster_means <- lobster_abundance %>%
+  group_by(year, site) %>%
+  summarize(mean_carapace = mean(size_mm, na.rm = TRUE), total_counts = n())
+
+ggplot(data = lobster_means, aes(x = year, y = total_counts)) + geom_line() + facet_wrap(~site)
+
+```
+
+```{r}
+# legal 2020 lobsters
+
+lobsters_2020 <- lobster_abundance %>%
+  filter(year == 2020) %>%
+  mutate(legal = case_when(size_mm >= 79.76 ~ 'yes',
+                           size_mm < 79.76 ~ 'no')) %>%
+  group_by(site, legal) %>%
+  summarize(count = n())
+
+ggplot(data = lobsters_2020, aes(x = site, y = count, fill = legal)) + geom_col(position = "fill") + labs(title = "Proportion of Legal Lobsters Per Site")
+
+# IVEE and NAPL - Isla Vista and Naples are MPAs
+```
+
+```{r}
+# Task 3
+## Filter Practice
+
+ex_a <- lobster_abundance %>%
+  filter(site %in% c("IVEE", "CARP", "NAPL"))
+
+ex_b <- lobster_abundance %>%
+  filter(month %in% 8)
+
+ex_c <- lobster_abundance %>%
+  filter(site == "AQUE"| size_mm > 70)
+
+ex_d <- lobster_abundance %>%
+  filter(!site %in% "NAPL")
+
+```
+
+```{r}
+## group by and summarize
+
+ex_e <- lobster_abundance %>%
+  group_by(site) %>%
+  summarize(mean_length_mm = mean(size_mm, na.rm=TRUE), stdev_length = sd(size_mm, na.rm = TRUE))
+
+ex_f <- lobster_abundance %>%
+  group_by(site, month) %>%
+  summarize(max_length = max(size_mm, na.rm = TRUE))
+
+```
+
+```{r}
+ex_g <- lobster_abundance %>%
+  mutate(size_cm = size_mm / 10)
+
+ex_h <- lobster_abundance %>%
+   mutate(site = tolower(site))
+
+ex_i <- lobster_abundance %>%
+  mutate(area = as.character(lobster_abundance$area))
+
+class(ex_i$area)
+```
+
+```{r}
+ex_j <- lobster_abundance %>%
+  mutate(size_bin = case_when(size_mm > 70 ~ "large",
+                              size_mm >= 70 ~ "small"))
+
+ex_k <- lobster_abundance %>%
+  mutate(designation = case_when(site %in% c("IVEE", "NAPL") ~ "MPA",
+                   site %in% c("AQUE", "CARP", "MOHK") ~ "not MPA"))
+```
+
